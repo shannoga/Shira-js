@@ -1,0 +1,477 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+
+  <title>שירה - מערכת ניהול</title>
+  <meta name="description" content="My Parse App">
+  <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="css/styles.css">
+ <link rel="stylesheet" href="css/bootstrap-tags.css">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/select2/3.5.0/select2-bootstrap.min.css">
+  <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/select2/3.5.0/select2.min.css">
+  <script src="js/underscore.js"></script>
+
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://www.parsecdn.com/js/parse-1.3.0.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/select2/3.5.0/select2.min.js"></script>
+   <script src="http://cdnjs.cloudflare.com/ajax/libs/select2/3.5.0/select2_locale_he.min.js"></script>
+
+  <script src="js/bootstrap-tags.min.js"></script>
+
+  <script src="js/main.js"></script>
+
+<script>
+
+</script>
+</head>
+
+<body>
+  
+</body>
+
+  <!-- Todo App Interface -->
+
+    <div id="shiaraApp">
+      <div class="header-view">
+
+      </div>
+
+      <div class="content">
+      </div>
+    </div>
+
+    <div id="footer">
+      <note>מערכת ניהול אפליקציית שירה</note> | <a href = "#">דף הבית</a>
+    </div>
+
+    <!-- Templates -->
+
+    <script type="text/template" id="header-template">
+      <div class="page-header">
+        <h1>אפליקציית שירה <small>מערכת ניהול</small></h1>
+      </div>
+      <div id="user-info">
+        מחובר/ת <%= Parse.User.current().escape("username") %> (<a href="#" class="log-out">התנתק / י</a>)
+      </div>
+      </header>
+      </div>
+
+      <hr />
+    </script>
+
+
+
+    <script type="text/template" id="login-template">
+      <header id="header"></header>
+      <div class="login">
+        <form class="login-form">
+          <h2>Log In</h2>
+          <div class="error" style="display:none"></div>
+          <input type="text" id="login-username" placeholder="Username" />
+          <input type="password" id="login-password" placeholder="Password" />
+          <button>Log In</button>
+        </form>
+      </div>
+    </script>
+
+
+   <script type="text/template" id="home-page-template">
+      <div class="home-page">
+        <a href = "#/poets" class="btn btn-primary btn-lg btn-block">ניהול שירים ומשוררים</a>
+        <br />
+
+        <hr />
+        <h4>ניהול דף הבית</h4>
+
+          
+          <div class="form-group">
+            <label for="daily-song-id">שיר יומי</label>
+            <br />
+            <select id="daily-song">
+                <% _.each(songs, function(song){ %>
+                   <option value="<%= song.id %>" <%= homePage.get('dailySong').id == song.id ? "selected" : "" %> ><%= stripVowels(song.get("name")) %></option>
+                <% }); %>
+
+            </select>
+            &nbsp &nbsp
+            <button class="btn btn-default btn-xs update-daily-song-btn">עדכן שיר יומי</button>
+
+          </div>
+
+          <div class="form-group">
+            <label for="shabat-song-id">שיר לשבת</label>
+            <br />
+            <select id="shabat-song">
+                <% _.each(songs, function(song){ %>
+                   <option value="<%= song.id %>" <%= homePage.get('shabatSong').id == song.id ? "selected" : "" %> ><%= stripVowels(song.get("name")) %></option>
+                <% }); %>
+
+            </select>
+            &nbsp &nbsp
+
+            <button class="btn btn-default btn-xs update-shabat-song-btn" >עדכן שיר לשבת</button>
+
+          </div>
+
+      
+
+        <h4>באנרים</h4>
+        <a href = "#/newbanner" class="btn btn-primary">הוסף באנר</a>
+
+        <br /><hr />
+        <table class="table table-striped">
+          <thead>
+            <th>מזהה</th>
+            <th>באנר</th>
+            <th>יעד</th>
+            <th>סוג יעד</th>
+
+            <th>נוצר בתאריך</th>
+            <th>עודכן על ידי</th>
+
+          </thead>
+          <tbody class="searchable">
+            <% _.each(banners, function(banner){ %>
+                  <tr>
+                    <td><%= banner.id %></td>
+                    <td><% var image = banner.get("image"); %> <img src="<%= image ? image.url() : "images/empty_banner.png" %>" width="160"/></td>
+                    <td><%= banner.get("targetObjectName")%></td>
+                    <td><%= banner.get("targetObjectType")%></td>
+                    <td><%= new Date(Date.parse(banner.createdAt)).toLocaleDateString()%></td>
+                    <td><%= banner.get("updatedBy")%></td>
+                    <td><a href="#/editbanner/<%= banner.id %>"class="btn btn-default">ערוך</a></td>
+
+                  </tr>
+            <% }); %>
+          </tbody>
+        </table>
+
+
+      </div>
+    </script>
+
+
+
+
+
+    <script type="text/template" id="edit-banner-template">
+    
+      <div class="banner">
+        <h1> <%= banner ? "עריכה"  : "באנר חדש" %></h1>
+        <a href = "#/" class="btn btn-default"> חזור לדף הבית</a>
+
+      <% if(banner) { %>
+        <button class="btn btn-danger delete-banner">מחר באנר</button>
+       <% }; %>
+
+        <hr />
+      <h4> עדכן תמונה </h4>
+      <div>
+      <img id="banner-image" class="img-responsive img-rounded" alt="Responsive image" src="images/avatar-placeholder.png"/>
+      </div>
+
+      <form role="form"  class="update-banner-image" enctype="multipart/form-data" method="post">
+        <div class="form-group">
+          <label for="banner-image-select">Banner image</label>
+          <input type="file" name="banner-image-select" id="banner-image-file"></input>
+        </div>
+
+      </form>
+      <br />
+      <button class="btn btn-default update-image-btn" disabled="disabled">עדכן תמונה</button>
+        <hr />
+
+        <form role="form" class="edit-banner">
+          <div class="form-group">
+            <label for="baner-target-name">target object name</label>
+            <input type="name" class="form-control" id="banner-target-name" placeholder="Enter name" value="<%= banner ? banner.get('targetObjectName') : '' %>"/>
+          </div>
+
+          <div class="form-group">
+            <label for="baner-target-id">target object id</label>
+            <input type="name" class="form-control" id="banner-target-id" placeholder="Enter id" value="<%= banner ? banner.get('targetObjectId') : '' %>"/>
+          </div>
+
+          <div class="form-group">
+            <label for="baner-target-type">target object type</label>
+            <select id="banner-type">
+                 <option value="song">שיר</option>
+                 <option value="poet">משורר</option>
+                 <option value="event">אירוע</option>
+            </select>
+          </div>
+        
+         
+          <% if (banner){ %>
+              <input type="hidden" id="banner-id" value="<%= banner.id %>"/>
+          <% } %>
+           <hr />
+
+          <button class="btn btn-success">שמור</button>
+          <a href = "#/" class="btn btn-warning"> בטל</a>
+
+        </form>
+      </div>
+      <br />
+     
+
+     
+
+    </script>
+
+
+    
+
+
+    <script type="text/template" id="poets-list-template">
+      
+      <div class="poets">
+        <h1>רשימת משוררים</h1>
+        <a href = "#/new" class="btn btn-primary">הוסף משורר</a>
+         <a href = "#" class="btn btn-default">חזרה לדף הבית</a>
+
+        <hr />
+
+        <div class="input-group">
+          <input id="filter" type="text" class="form-control filter" placeholder="הקלד לחיפוש משורר">
+        </div>
+        <table class="table table-striped">
+          <thead>
+            <th>מזהה</th>
+            <th>שם</th>
+            <th>מספר שירים</th>
+            <th>נוצר בתאריך</th>
+            <th>עודכן על ידי</th>
+            <th>ערוך</th>
+            <th>רשימת שירים</th>
+
+          </thead>
+          <tbody class="searchable">
+            <% _.each(poets, function(poet){ %>
+                  <tr>
+                    <td><%= poet.id %></td>
+                    <td><%= poet.get("name")%></td>
+                    <td><%= poet.get("songsCount")%></td>
+                    <td><%= new Date(Date.parse(poet.createdAt)).toLocaleDateString()%></td>
+                    <td><%= poet.get("updatedBy")%></td>
+                    <td><a href="#/edit/<%= poet.id %>"class="btn btn-default">ערוך</a></td>
+                    <td><a href="#/songs/<%= poet.id %>/<%= poet.get('name') %> "class="btn btn-default">רשימת שירים</a></td>
+
+                  </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="progress">
+  <div class="progress-bar progress-bar-striped active"  role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 45%">
+    <span class="sr-only">45% Complete</span>
+  </div>
+</div>
+    </script>
+
+
+
+
+
+
+
+    <script type="text/template" id="edit-poet-template">
+     
+      <div class="poets">
+        <h1> <%= poet ? "עריכה"  : "משורר חדש" %></h1>
+        <a href = "#/poets" class="btn btn-default"> חזור לרשימת המשוררים</a>
+
+      <% if(poet) { %>
+        <button class="btn btn-danger delete-poet">מחק משורר</button>
+        <small> מחיקת משורר תמחק בנוסף את כל השירים המקורשים אליו</small>
+       <% }; %>
+
+        <hr />
+      <h4> עדכן תמונה </h4>
+      <div>
+      <img id="poet-image" class="img-responsive img-rounded" alt="Responsive image" src="images/avatar-placeholder.png"/>
+      </div>
+
+      <form role="form"  class="update-poet-image" enctype="multipart/form-data" method="post">
+        <div class="form-group">
+          <label for="poet-image-select">Poet image</label>
+          <input type="file" name="poet-image-select" id="poet-image-file"></input>
+        </div>
+
+      </form>
+      <br />
+      <button class="btn btn-default update-image-btn" id="update-poet-image-botton" disabled="disabled">עדכן תמונה</button>
+        <hr />
+        <form role="form" class="edit-poet">
+          <div class="form-group">
+            <label for="poet-name">שם</label>
+            <input type="name" class="form-control" id="poet-name" placeholder="Enter name" value="<%= poet ? poet.get('name') : '' %>"/>
+          </div>
+          <div class="form-group">
+            <label for="poet-biography">קורות חיים</label>
+            <textarea id="poet-biography" class="form-control" rows="10"><%= poet ? poet.escape('biography') : '' %></textarea>
+          </div>
+         
+          <% if (poet){ %>
+              <input type="hidden" id="poet-id" value="<%= poet.id %>"/>
+          <% } %>
+           <hr />
+
+          <button class="btn btn-success">שמור</button>
+          <a href = "#/poets" class="btn btn-warning"> בטל</a>
+
+        </form>
+      </div>
+      <br />
+     
+
+     
+
+    </script>
+
+
+
+    <script type="text/template" id="songs-list-template">
+     
+      <div class="songs">
+        <h1>רשימת שירים - <%= decodeURIComponent(poetName) %> </h1>
+        <a href = "#/<%= poetId %>/<%= decodeURIComponent(poetName) %>/song/new" class="btn btn-primary">הוסף שיר</a>
+        <a href = "#/poets" class="btn btn-default">חזור לרשימת המשוררים</a>
+
+        <hr />
+        <div class="input-group">
+          <input id="filter" type="text" class="form-control filter" placeholder="הקלד לחיפוש שיר">
+        </div>
+                <hr />
+
+        <table class="table table-striped">
+          <thead>
+            <th>id</th>
+            <th>name</th>
+            <th>poet</th>
+            <th>created</th>
+          </thead>
+          <tbody class="searchable">
+            <% _.each(songs, function(song){ %>
+                  <tr id ="<%= song.id %>">
+                    <td><%= song.id%></td>
+                    <td><%= song.get("name")%></td>
+                    <td><%= decodeURIComponent(poetName) %></td>
+                    <td><%= new Date(Date.parse(song.createdAt)).toLocaleDateString()%></td>
+                    <td><a href="#/<%= poetId %>/<%= decodeURIComponent(poetName) %>/song/<%= song.id %>/edit" class="btn btn-default">ערוך</a></td>
+                    <td><button data-song-id="<%= song.id %>"  class="btn btn-danger deleteSong">מחק</button>
+                  </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </script>
+
+
+
+     <script type="text/template" id="edit-song-template">
+     
+      <div class="poets">
+        <h1><%= song ? song.get('name') : 'שיר חדש' %> </h1>
+        <h3><%= decodeURIComponent(poetName) %></h3>
+
+        <hr />
+                  <a href = '#/songs/<%= poetId %>/<%= decodeURIComponent(poetName) %>'  class="btn btn-default"> חזור לכל שירי <%= decodeURIComponent(poetName) %> </a>
+                  <% if(song) { %>
+                  <button class="btn btn-toggle btn-success publish"> <%= song.get("public") ?  "הסתר" : "פרסם" %></button>
+                  <%};%>
+
+        <form role="form" class="edit-song">
+          <div class="form-group">
+            <label for="song-name">שם</label>
+            <input type="name" class="form-control" id="song-name" placeholder="שם השיר" value="<%= song ? song.get('name') : '' %>"/>
+          </div>
+          <div class="form-group">
+            <label for="song-text">גוף השיר</label>
+            <textarea id="song-text" class="form-control" rows="10"><%= song ? song.get('text') : '' %></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="song-book">ספר</label>
+            <input type="name" class="form-control" id="song-book" placeholder="מתוך הספר" value="<%= song ? song.get('book') : '' %>"/>
+          </div>
+
+          <div class="form-group">
+            <label for="song-year">שנת פרסום</label>
+            <input type="name" class="form-control" id="song-year" placeholder="שנה" value="<%= song ? song.get('year') : '' %>"/>
+          </div>
+
+          <div class="form-group">
+            <label for="song-date">תאריך <small>לא חובה, תאריך מדויק בו פוסם השירת אם רלוונטי</small></label>
+            <input type="name" class="form-control" id="song-date" placeholder="תאריך" value="<%= song ? song.get('date') : '' %>"/>
+          </div>
+
+          <div class="form-group">
+            <label for="song-dedication">הקדשה <small>אופציונלי</small></label>
+            <input type="name" class="form-control" id="song-dedication" placeholder="הקדשה" value="<%= song ? song.get('dedication') : '' %>"/>
+          </div>
+
+
+          <div class="form-group">
+            <label for="song-note">הערה <small>טקסט חופשי, יופיע בתחתית השיר</small></label>
+            <input type="name" class="form-control" id="song-note" placeholder="הערה" value="<%= song ? song.get('note') : '' %>"/>
+          </div>
+
+          <div class="form-group">
+            <label for="song-tags">תגים <small>בחר תגים רלוונטיים לשיר</small></label>
+
+            <select id="song-tags-select" multiple>
+                 <% _.each(tags, function(tag){ %>
+                   <option value="<%= tag.id %>"><%= tag.get("text") %></option>
+                <% }); %>
+            </select>
+
+
+          </div>
+            <br />
+           <% if (song){ %>
+            <input type="hidden" id="song-id" value="<%= song.id %>"/>
+        <% } %>
+
+          <button class="btn btn-success">שמור</button>
+          <a href = '#/songs/<%= poetId %>/<%= decodeURIComponent(poetName) %>'  class="btn btn-default"> בטל </a>
+        </form>
+
+
+      </div>
+      <br /><br /><hr />
+      <button class="btn btn-default showTags"> הוסף תג חדש</button>
+
+      <div class="tagging"></div>
+    </script>
+
+
+     <script type="text/template" id="tagging-template">
+            <h4>הוספת תג חדש <small>יש לתאם כל הוספת תג חדש עם העורכת</small></h4>
+
+          <form role="form" class="add-new-tag">
+            <div class="form-group">
+              <label for="song-name">שם</label>
+              <input type="name" class="form-control" id="tag-text"  placeholder="Enter new tag" value=""/>
+            </div>
+            <button  class="btn btn-default">הוסף</button>
+
+          </form>
+     </script>
+
+
+
+
+
+
+
+
+   
+
+</html>
+
