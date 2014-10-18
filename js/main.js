@@ -632,6 +632,7 @@ $(function() {
               console.log(banners);
               //get all songs
               var query = new Parse.Query(Song);
+              query.equalTo("public", true);
               query.find({
                  success: function(songs) {
                   console.log("songs = " + songs);
