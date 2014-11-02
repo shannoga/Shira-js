@@ -27,10 +27,8 @@
 </head>
 
 <body>
-  
-</body>
 
-  <!-- Todo App Interface -->
+  <!-- Shira Interface -->
 
     <div id="shiaraApp">
       <div class="header-view">
@@ -44,10 +42,12 @@
     <div id="footer">
       <note>מערכת ניהול אפליקציית שירה</note> | <a href = "#">דף הבית</a>
     </div>
+</body>
 
-    <!-- Templates -->
+<!-- Templates -->
 
-    <script type="text/template" id="header-template">
+<!-- Header  -->
+<script type="text/template" id="header-template">
       <div class="page-header">
         <h1>אפליקציית שירה <small>מערכת ניהול</small></h1>
       </div>
@@ -59,10 +59,10 @@
 
       <hr />
     </script>
+<!-- Header  End-->
 
-
-
-    <script type="text/template" id="login-template">
+<!-- Login  -->
+<script type="text/template" id="login-template">
       <header id="header"></header>
       <div class="login">
         <form class="login-form">
@@ -74,9 +74,10 @@
         </form>
       </div>
     </script>
+<!-- Login End  -->
 
-
-   <script type="text/template" id="home-page-template">
+<!-- Home Page -->
+<script type="text/template" id="home-page-template">
       <div class="home-page">
         <a href = "#/poets" class="btn btn-primary btn-lg btn-block">ניהול שירים ומשוררים</a>
         <br />
@@ -150,12 +151,10 @@
 
       </div>
     </script>
+<!-- Home Page End -->
 
-
-
-
-
-    <script type="text/template" id="edit-banner-template">
+<!-- Edit Banner -->
+<script type="text/template" id="edit-banner-template">
     
       <div class="banner">
         <h1> <%= banner ? "עריכה"  : "באנר חדש" %></h1>
@@ -179,7 +178,7 @@
 
       </form>
       <br />
-      <button class="btn btn-default update-image-btn" disabled="disabled">עדכן תמונה</button>
+      <button class="btn btn-default" id="update-banner-image-botton" disabled="disabled">עדכן תמונה</button>
         <hr />
 
         <form role="form" class="edit-banner">
@@ -196,9 +195,10 @@
           <div class="form-group">
             <label for="baner-target-type">target object type</label>
             <select id="banner-type">
-                 <option value="song">שיר</option>
-                 <option value="poet">משורר</option>
-                 <option value="event">אירוע</option>
+                 <option value="Song">שיר</option>
+                 <option value="Poet">משורר</option>
+                 <option value="Event">אירוע</option>
+                 <option value="Tag">תג</option>
             </select>
           </div>
         
@@ -219,12 +219,10 @@
      
 
     </script>
+<!-- Edit Banner End -->
 
-
-    
-
-
-    <script type="text/template" id="poets-list-template">
+<!-- Poets List -->
+<script type="text/template" id="poets-list-template">
       
       <div class="poets">
         <h1>רשימת משוררים</h1>
@@ -270,14 +268,10 @@
   </div>
 </div>
     </script>
+<!--  Poets List End -->
 
-
-
-
-
-
-
-    <script type="text/template" id="edit-poet-template">
+<!--  Edit Poet -->
+<script type="text/template" id="edit-poet-template">
      
       <div class="poets">
         <h1> <%= poet ? "עריכה"  : "משורר חדש" %></h1>
@@ -286,7 +280,7 @@
       <% if(poet) { %>
         <button class="btn btn-danger delete-poet">מחק משורר</button>
         <small> מחיקת משורר תמחק בנוסף את כל השירים המקורשים אליו</small>
-       <% }; %>
+      
 
         <hr />
       <h4> עדכן תמונה </h4>
@@ -303,6 +297,8 @@
       </form>
       <br />
       <button class="btn btn-default update-image-btn" id="update-poet-image-botton" disabled="disabled">עדכן תמונה</button>
+
+       <% }; %>
         <hr />
         <form role="form" class="edit-poet">
           <div class="form-group">
@@ -319,21 +315,18 @@
           <% } %>
            <hr />
 
-          <button class="btn btn-success">שמור</button>
+          <button class="btn btn-success"><%= poet ? "עדכן שינויים" : "שמור והמשך לעדכון תמונה" %></button>
           <a href = "#/poets" class="btn btn-warning"> בטל</a>
 
         </form>
       </div>
       <br />
-     
 
-     
+ </script>
+<!--  Edit Poet End -->
 
-    </script>
-
-
-
-    <script type="text/template" id="songs-list-template">
+<!--  Songs List -->
+<script type="text/template" id="songs-list-template">
      
       <div class="songs">
         <h1>רשימת שירים - <%= decodeURIComponent(poetName) %> </h1>
@@ -352,6 +345,12 @@
             <th>name</th>
             <th>poet</th>
             <th>created</th>
+            <th></th>
+
+            <th></th>
+            <th></th>
+
+
           </thead>
           <tbody class="searchable">
             <% _.each(songs, function(song){ %>
@@ -362,16 +361,18 @@
                     <td><%= new Date(Date.parse(song.createdAt)).toLocaleDateString()%></td>
                     <td><a href="#/<%= poetId %>/<%= decodeURIComponent(poetName) %>/song/<%= song.id %>/edit" class="btn btn-default">ערוך</a></td>
                     <td><button data-song-id="<%= song.id %>"  class="btn btn-danger deleteSong">מחק</button>
+                    <td><a href="#/song/<%= song.id %>/references" class="btn btn-default">רפרנסים</a></td>
+
                   </tr>
             <% }); %>
           </tbody>
         </table>
       </div>
     </script>
+<!--  Songs List End -->
 
-
-
-     <script type="text/template" id="edit-song-template">
+<!-- Edit song -->
+<script type="text/template" id="edit-song-template">
      
       <div class="poets">
         <h1><%= song ? song.get('name') : 'שיר חדש' %> </h1>
@@ -430,6 +431,8 @@
 
 
           </div>
+
+
             <br />
            <% if (song){ %>
             <input type="hidden" id="song-id" value="<%= song.id %>"/>
@@ -446,9 +449,98 @@
 
       <div class="tagging"></div>
     </script>
+<!-- Edit song End -->
+
+<!--  References List -->
+<script type="text/template" id="references-list-template">
+        <h1>רפרנסים לשיר</h1>
+
+  <div class="references">
+    <a href = "#/song/<%= songId %>/references/new" class="btn btn-primary">הוסף רפרנס</a>
+    <a href = "#/<%= songId %>/songs" class="btn btn-default">חזור לשיר</a>
+
+    <hr />
+    <table class="table table-striped">
+      <thead>
+      <th>id</th>
+      <th>substring</th>
+      <th>reference</th>
+      <th>explanation</th>
+      <th>created</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      </thead>
+      <tbody class="searchable">
+      <% _.each(references, function(reference){ %>
+      <tr id ="<%= reference.id %>">
+        <td><%= reference.id%></td>
+        <td><%= reference.get("substring")%></td>
+        <td><%= reference.get("reference")%></td>
+        <td><%= reference.get("explanation")%></td>
+        <td><%= new Date(Date.parse(reference.createdAt)).toLocaleDateString()%></td>
+     
+        <td><button data-reference-id="<%= reference.id %>"  class="btn btn-danger deleteReference">מחק</button>
+        <td><a href="#/song/<%= songId %>/references/<%= reference.id %>" class="btn btn-default">ערוך</a></td>
+
+      </tr>
+      <% }); %>
+      </tbody>
+    </table>
+  </div>
+</script>
+<!--  References List End -->
 
 
-     <script type="text/template" id="tagging-template">
+
+<!--  Edit Poet -->
+<script type="text/template" id="edit-reference-template">
+     
+      <div class="reference">
+        <h1> <%= reference ? "עריכה"  : "רפרנס חדש" %></h1>
+        <a href = "#/poets" class="btn btn-default"> חזור לרשימת המשוררים</a>
+      <% if(reference) { %>
+        <button class="btn btn-danger delete-reference">מחק רפרנס</button>      
+       <% }; %>
+        <hr />
+
+        <form role="form" class="edit-reference">
+          <div class="form-group">
+            <label for="reference-substring">מילות השיר</label>
+            <input type="name" class="form-control" id="reference-substring" placeholder="Enter substring" value="<%= reference ? reference.get('substring') : '' %>"/>
+          </div>
+
+          <div class="form-group">
+            <label for="reference-reference">רפרנס</label>
+            <input type="name" class="form-control" id="reference-reference" placeholder="Enter reference" value="<%= reference ? reference.get('reference') : '' %>"/>
+          </div>
+
+          <div class="form-group">
+            <label for="reference-explanation">הסבר</label>
+            <textarea id="reference-explanation" class="form-control" rows="10"><%= reference ? reference.get('explanation') : '' %></textarea>
+          </div>
+         
+          <% if (reference){ %>
+              <input type="hidden" id="reference-id" value="<%= reference.id %>"/>
+          <% } %>
+              <input type="hidden" id="song-id" value="<%= songId %>"/>
+
+           <hr />
+
+          <button class="btn btn-success"><%= reference ? "עדכן שינויים" : "שמור" %></button>
+          <a href = "#/poets" class="btn btn-warning"> בטל</a>
+
+        </form>
+      </div>
+      <br />
+
+ </script>
+<!--  Edit Poet End -->
+
+
+
+<!-- Tagging song -->
+<script type="text/template" id="tagging-template">
             <h4>הוספת תג חדש <small>יש לתאם כל הוספת תג חדש עם העורכת</small></h4>
 
           <form role="form" class="add-new-tag">
@@ -459,16 +551,14 @@
             <button  class="btn btn-default">הוסף</button>
 
           </form>
-     </script>
+ </script>
+<!-- Tagging song End -->
+
+
+<!-- Templates End -->
 
 
 
-
-
-
-
-
-   
 
 </html>
 

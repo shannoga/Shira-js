@@ -33,8 +33,9 @@ function stripVowels(rawString)
   return(newString);
 }
 
-function validateImage(file,validWidth,validHheight,maxSize)
+function validateImage(button,file,validWidth,validHheight,maxSize)
 {
+
   var reader = new FileReader();
         var image  = new Image();
       
@@ -46,7 +47,9 @@ function validateImage(file,validWidth,validHheight,maxSize)
                 if (this.width != validWidth && this.height != validHheight) { alert("על התומנה להיות בגודל 140 על 140")}
                 else if(file.type != "image/png" && file.type != "image/jpeg" ) { alert("על התמונה להיות מסוג png או jpg בלבד")}
                 else if(~~(file.size/1024) > maxSize) { alert("גודל קובץ התמונה צריך להיות נמוך או שווה ל " + maxSize +'KB')}
-                else {$('#update-poet-image-botton').removeAttr('disabled')}; 
+                else {console.log("button = " + button);
+                      button.removeAttr('disabled');
+                    }; 
             };
             image.onerror= function() {
                 alert('Invalid file type: '+ file.type);
@@ -71,7 +74,7 @@ $(function() {
   // Models
   // ----------
 
- var Poet = Parse.Object.extend("Poet", {
+  var Poet = Parse.Object.extend("Poet", {
 
     initialize: function() {
       // if (!this.get("content")) {
@@ -87,7 +90,7 @@ $(function() {
       // if (!this.get("content")) {
       //   this.set({"content": this.defaults.content});
       // }
-    },
+    }
    
   });
 
@@ -97,7 +100,7 @@ $(function() {
       // if (!this.get("content")) {
       //   this.set({"content": this.defaults.content});
       // }
-    },
+    }
    
   });
 
@@ -107,7 +110,7 @@ $(function() {
       // if (!this.get("content")) {
       //   this.set({"content": this.defaults.content});
       // }
-    },
+    }
    
   });
 
@@ -117,12 +120,22 @@ $(function() {
       // if (!this.get("content")) {
       //   this.set({"content": this.defaults.content});
       // }
-    },
+    }
    
   });
 
-  
- 
+    var Reference = Parse.Object.extend("Reference", {
+
+        initialize: function() {
+            // if (!this.get("content")) {
+            //   this.set({"content": this.defaults.content});
+            // }
+        }
+
+    });
+
+
+
 
 
 
@@ -139,7 +152,6 @@ $(function() {
     }
 
   });
-
 
    var PoetsCollection = Parse.Collection.extend({
 
@@ -172,7 +184,6 @@ $(function() {
           return query; 
        }
     });
-
 
 
 //Views
@@ -231,7 +242,6 @@ $(function() {
   // ---------------
 
 
-
   var EditPoetView = Parse.View.extend({
 
   events: {
@@ -248,17 +258,27 @@ $(function() {
     create: function(event)
     {
       event.preventDefault();
-
+      var self = this;
       var poetName = this.$("#poet-name").val();
       var poetBiography = this.$("#poet-biography").val();
       var poetId = this.$("#poet-id").val();
       var updater = Parse.User.current().escape("username");
       console.log("id - " + poetId);
       var poet = new Poet();
-         
+
       poet.save({id:poetId, name:poetName, biography:poetBiography, updatedBy:updater}, {
       success: function(object) {
-            appRouter.navigate('#/poets', {trigger:true});
+            if (object.existed())
+            {
+              appRouter.navigate('#/poets', {trigger:true});
+             }
+             else
+             {
+              console.log("poetid = " + object.id);
+              currentPoetId : object.id;
+              self.render({savedPoet:object});
+             }
+            
       },
       error: function(model, error) {
             console.log(error.message);
@@ -285,7 +305,7 @@ $(function() {
     validatePoetImage: function(event) {
       $('#update-poet-image-botton').attr('disabled','disabled');
       var file = $("#poet-image-file").prop('files')[0];
-      validateImage(file,140,140,500);
+      validateImage($('#update-poet-image-botton'),file,140,140,500);
     },
     updateImage: function(event) {
       $('#update-poet-image-botton').attr('disabled','disabled');
@@ -336,26 +356,23 @@ $(function() {
             console.log(error.message);
           }
         });
+      }else if (options.savedPoet) {
+         currentPoetId = options.savedPoet.id;
+        this.$el.html(_.template($("#edit-poet-template").html(), {poet:options.savedPoet}));
 
       }else{
           this.$el.html(_.template($("#edit-poet-template").html(), {poet:null}));
       };
     }
-  });
+  });                                                  
   // ---------------
 
 
-
-
-
-
-
   // Song List View
-  // --------------
+  // --------------                                                                                                                                                                                                                                                     b 
   var SongsListView = Parse.View.extend({
    events: {
-      "click .deleteSong" : "delete",
-      "keyup .filter" : "filter"
+      "click .deleteSong" : "delete",       "keyup .filter" : "filter" 
     },
     el: ".content",
 
@@ -410,10 +427,7 @@ $(function() {
   });
   // ---------------
 
-
-
-
-
+  // Edit Song View
   var EditSongView = Parse.View.extend({
 
     initialize: function()
@@ -510,6 +524,7 @@ $(function() {
         var self = this;
         var query = new Parse.Query(Song);
         query.include("tags");
+          query.include("references");
         query.get(options.songId,{
           success: function(song){
               currentSong = song;
@@ -561,7 +576,141 @@ $(function() {
   });
   // ---------------
 
+    //     References List View
+    var ReferencesListView  = Parse.View.extend({
+        events: {
+            "click .deleteReference" : "delete"
+        },
+        el: ".content",
 
+        initialize: function() {
+
+        },
+
+        delete: function(event) {
+            var reference = new Reference();
+            var referenceId = Parse.$(event.currentTarget).data('reference-id');
+            console.log('reference id = ',referenceId);
+
+            reference.id = referenceId;
+
+            reference.destroy({
+                success: function(deletedReference) {
+                    alert('המחיקה הצליחה');
+                    $('#'+referenceId).remove();
+                },
+                error: function(reference, error) {
+                    alert('המחיקה נכשלה');
+                }
+            });
+        },
+
+        render: function(options) {
+            var self = this;
+            var query = new Parse.Query(Reference);
+            query.include("song");
+            var song = new Song();
+            song.id =  options.songId;
+            query.equalTo("song", song);
+            var collection = query.collection();
+            collection.fetch({
+                success: function(references) {
+                    self.$el.html(_.template($("#references-list-template").html(), {references:references.models, songId:options.songId}));
+                },
+                error: function(collection, error) {
+                    // The collection could not be retrieved.
+                }
+            });
+        }
+    });
+    // ---------------
+
+
+
+
+
+
+
+    var EditReferenceView = Parse.View.extend({
+
+  events: {
+      "submit form.edit-reference": "create",
+      "click .delete-reference" : "delete",
+    },
+
+    el: ".content",
+    initialize: function() {
+       var currentReferenceId = null;
+    },
+    create: function(event)
+    {
+      event.preventDefault();
+      var self = this;
+      var referenceSubstring = this.$("#reference-substring").val();
+      var referenceReference = this.$("#reference-reference").val();
+      var referenceExplanation = this.$("#reference-explanation").val();
+      var referenceId  = this.$("#reference-id").val();
+      var songId = this.$("#song-id").val();
+      var updater = Parse.User.current().escape("username");
+      console.log("id - " + referenceId);
+      var reference = new Reference();
+      var song = new Song();
+      song.id = songId;
+      reference.save({id:referenceId, substring:referenceSubstring, reference:referenceReference, explanation:referenceExplanation, song:song, updatedBy:updater}, {
+      success: function(object) {
+          appRouter.navigate('#/poets', {trigger:true});   
+      },
+      error: function(model, error) {
+            console.log(error.message);
+      }
+     });
+    },
+
+    delete: function(event) {
+        var reference = new Reference();
+       reference.id = currentReferenceId;
+
+      reference.destroy({
+        success: function(deletedReference) {
+          appRouter.navigate('#/poets', {trigger:true});
+          alert('נמחק בהצלחה');
+        },
+        error: function(deletedReference, error) {
+             alert('המחיקה נכשלה');
+        }
+      });
+    },
+
+    render: function(options) {
+      if (options.referenceId != "new") {
+        alert (options.referenceId);
+        var self = this;
+        var query = new Parse.Query(Reference);
+
+        query.get(options.referenceId,{
+          success: function(reference){
+              self.$el.html(_.template($("#edit-reference-template").html(), {reference:reference, songId:options.songId}));
+             currentReferenceId = reference.id;
+          },
+          error: function(object, error) {
+            console.log(error.message);
+          }
+        });
+      }else{
+          this.$el.html(_.template($("#edit-reference-template").html(), {reference:null, songId:options.songId}));
+      };
+    }
+  });                                                  
+  // ---------------
+
+
+
+
+
+
+
+
+  // Tag Song View
    var TaggingView = Parse.View.extend({
 
      events: {
@@ -598,10 +747,9 @@ $(function() {
      }
 
   });
+  // ---------------
 
-
-
-
+  // Home Page View
   var HomePageView = Parse.View.extend({
 
     events: {
@@ -616,6 +764,8 @@ $(function() {
         var dailySongSelect = null;
         var shabatSongSelect = null;
         var currentHomePage = null;
+        var dailySongId = null;
+        var shabatSongId = null;
       },
       render: function() {
         var self = this;
@@ -625,9 +775,9 @@ $(function() {
         query.get("Ae14lgSKLk" ,{
           success: function(homePage){
               currentHomePage = homePage;
-              var dailySong = homePage.get("dailySong");
-              console.log(dailySong);
-
+              dailySongId = homePage.get("dailySong").id;
+              shabatSongId = homePage.get("shabatSong").id;
+console.log(dailySongId + " " + shabatSongId);
               var banners = homePage.get("banners");
               console.log(banners);
               //get all songs
@@ -637,14 +787,42 @@ $(function() {
                  success: function(songs) {
                   console.log("songs = " + songs);
                      self.$el.html(_.template($("#home-page-template").html(), {homePage:homePage, songs:songs, banners:banners}));
+                     $('.update-daily-song-btn').attr('disabled','disabled');
+                     $('.update-shabat-song-btn').attr('disabled','disabled');
 
                      dailySongSelect = $("#daily-song").select2({
                         width:400
                      });
 
+                    $("#daily-song").on("change", function(event) { 
+                      console.log("change "+JSON.stringify({val:event.val, added:event.added, removed:event.removed})); 
+                      if(event.val != dailySongId)
+                      { 
+                        $(".update-daily-song-btn").removeAttr("disabled");
+                      }
+                      else
+                      {
+                        $('.update-daily-song-btn').attr('disabled','disabled');
+                      }
+                    });
+
+
                      shabatSongSelect = $("#shabat-song").select2({
                         width:400
                      });
+
+                     $("#shabat-song").on("change", function(event) { 
+                      console.log("change "+JSON.stringify({val:event.val, added:event.added, removed:event.removed})); 
+                      if(event.val != shabatSongId)
+                      { 
+                        $(".update-shabat-song-btn").removeAttr("disabled");
+                      }
+                      else
+                      {
+                        $('.update-shabat-song-btn').attr('disabled','disabled');
+                      }
+
+                    });
 
                   },
                   error: function(user, error) {
@@ -658,29 +836,52 @@ $(function() {
         });
       },
       updateDailySong: function(){
+         $('.update-daily-song-btn').attr('disabled','disabled');
         console.log("day = " + dailySongSelect.select2("val"));
         var song = new Song();
         song.id = dailySongSelect.select2("val");
         currentHomePage.set("dailySong", song);
-        currentHomePage.save();
+        currentHomePage.save({
+          success: function(){
+              dailySongId = currentHomePage.get("dailySong").id;
+              alert("העדכון הושלם בהצלחה, הודעה נשלחה למשתשמים");
+
+          },
+          error: function(object,error)
+          {
+            $(".update-daily-song-btn").removeAttr("disabled");
+            alert("העדכון נכשל אנא נסו שנית" + error);
+          }
+        });
       },
+  
       updateShabatSong: function(){
+        $('.update-shabat-song-btn').attr('disabled','disabled');
         console.log("shabat = " + shabatSongSelect.select2("val"));
         var song = new Song();
         song.id = shabatSongSelect.select2("val");
         currentHomePage.set("shabatSong", song);
-        currentHomePage.save();
+        currentHomePage.save({
+          success: function(){
+              shabatSongId = currentHomePage.get("shabatSong").id;
+          },
+          error: function(object,error)
+          {
+             $(".update-shabat-song-btn").removeAttr("disabled");
+            alert("העדכון נכשל אנא נסו שנית" + error);
+          }
+        });
       },
   });
+  // ---------------
 
-
-
+  // Edit Banner View
  var EditBannerView = Parse.View.extend({
 
   events: {
       "submit form.edit-banner": "create",
       "click .delete-banner" : "delete",
-      "click .update-image-btn" : "updateImage",
+      "click #update-banner-image-botton" : "updateImage",
       "change #banner-image-file" : "validateBannerImage"
     },
 
@@ -700,7 +901,7 @@ $(function() {
       var updater = Parse.User.current().escape("username");
       console.log("id - " + bannerId);
       var banner = new Banner();
-         
+       
       banner.save({id:bannerId, updatedBy:updater, targetObjectName:targetObjectName, targetObjectId:targetObjectId, targetObjectType:targetObjectType}, {
       success: function(object) {
             appRouter.navigate('#/', {trigger:true});
@@ -729,7 +930,9 @@ $(function() {
     validateBannerImage: function(event) {
       $('#update-banner-image-botton').attr('disabled','disabled');
       var file = $("#banner-image-file").prop('files')[0];
-      validateImage(file,140,140,500);
+      console.log(file);
+      var button = $('#update-banner-image-botton');
+      validateImage(button,file,1242,420,300);
     },
     updateImage: function(event) {
       $('#update-banner-image-botton').attr('disabled','disabled');
@@ -743,7 +946,7 @@ $(function() {
         parseFile.save().then(function(parseFile) 
         {
             var banner = new Banner();
-            banner.id = currentPoetId;
+            banner.id = currentBannerId;
             banner.set("image", parseFile);
             banner.save();
             $('#banner-image').attr('src', parseFile.url());
@@ -789,12 +992,10 @@ $(function() {
       };
     }
   });
+  // ---------------
 
-
-  // The main view that lets a user manage their todo items
-  
-//python -m SimpleHTTPServer 8000
-  var LogInView = Parse.View.extend({
+    // Log in View
+    var LogInView = Parse.View.extend({
     events: {
       "submit form.login-form": "logIn",
     },
@@ -832,10 +1033,9 @@ $(function() {
       this.$el.html(_.template($("#login-template").html()));
     }
   });
+    // ---------------
 
-
-
-
+    // Header View
   var HeaderView = Parse.View.extend({
 
     initialize: function() {
@@ -857,8 +1057,10 @@ $(function() {
     }
         
   });
-  // The main view for the app
-  var AppView = Parse.View.extend({
+    // ---------------
+
+    // App View
+    var AppView = Parse.View.extend({
 
     el: $("#shiaraApp"),
 
@@ -875,6 +1077,12 @@ $(function() {
       }
     }
   });
+    // ---------------
+
+
+
+
+
 
   var AppRouter = Parse.Router.extend({
     routes: {
@@ -886,17 +1094,29 @@ $(function() {
       "edit/:id": "editPoet",
       "songs/:id/:name" : "showSongs",
       ":poetId/:poetName/song/new" : "editSong",
-      ":poetId/:poetName/song/:songId/edit" : "editSong"
+      ":poetId/:poetName/song/:songId/edit" : "editSong",
+        "song/:songId/references" : "showReferences",
+        "song/:songId/references/:referenceId" : "editReference",
+        "song/:songId/references/new" : "editReference"
+
+
     }
   });
 
-  var headerView = new HeaderView;
+
+
+
+
+    var headerView = new HeaderView;
   var newAppView = new AppView;
   var poetsListView = new PoetsListView;
   var editPoetView = new EditPoetView;
   var songsListView = new SongsListView;
   var editSongView = new EditSongView;
-  var editBannerTemplate = new EditBannerView;
+    var referencesListView = new ReferencesListView;
+ var editReferencesView = new  EditReferenceView;
+
+    var editBannerTemplate = new EditBannerView;
   var appRouter = new AppRouter;
 
   appRouter.on('route:home', function(){
@@ -922,6 +1142,13 @@ $(function() {
   appRouter.on('route:editSong', function(poetId,poetName,songId){
      editSongView.render({poetId:poetId, poetName:poetName, songId:songId});
   });
+
+    appRouter.on('route:showReferences', function(songId){
+        referencesListView.render({songId:songId});
+    });
+    appRouter.on('route:editReference', function(songId,referenceId){
+        editReferencesView.render({referenceId:referenceId, songId:songId});
+    });
 
 
   Parse.history.start();
